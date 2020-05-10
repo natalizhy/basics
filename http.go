@@ -15,7 +15,8 @@ func init() {
 }
 
 func main() {
-	http.HandlerFunc("/fib", handleFib)
+	http.HandleFunc("/fib", handleFib)
+
 	http.ListenAndServe(":8080", nil)
 }
 
@@ -37,5 +38,9 @@ func fib(n int) int {
 	if r, ok := cache[n]; ok {
 		return r
 	}
-	return nil
+
+	sum := fib(n-1) + fib(n-2)
+	cache[n] = sum
+
+	return sum
 }
