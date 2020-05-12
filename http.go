@@ -1,7 +1,8 @@
-package main
+package main //http -f POST http://localhost:8080/fib num=1
 
 import (
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -17,7 +18,7 @@ func init() {
 func main() {
 	http.HandleFunc("/fib", handleFib)
 
-	http.ListenAndServe(":8080", nil)
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func handleFib(w http.ResponseWriter, r *http.Request) {
