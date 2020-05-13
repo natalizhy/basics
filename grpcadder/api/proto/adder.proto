@@ -3,8 +3,7 @@ syntax = "proto3";
 package api;
 
 service Adder {
-    rpc Add (AddRequest) returns (AddResponse) {
-    }
+    rpc Add (AddRequest) returns (AddResponse) {}
 }
 
 message AddRequest {

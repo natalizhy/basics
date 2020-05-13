@@ -1,8 +1,8 @@
 package adder
 
 import (
-	"github.com/natalizhy/basics/grpcadder/pkg/api"
 	"context"
+	"github.com/natalizhy/basics/grpcadder/pkg/api"
 )
 
 // GRPCServer ...
