@@ -4,6 +4,7 @@ import (
 	"github.com/x/crypto/bcrypt"
 
 	"github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 )
 
 type User struct {
@@ -14,7 +15,7 @@ type User struct {
 }
 
 func (u *User) Validate() error {
-	return  validation.ValidateStruct(u,
+	return validation.ValidateStruct(u,
 		validation.Field(&u.Email, validation.Required, is.Email),
 		validation.Field(&u.Password, validation.By(requiredIf(u.EncryptedPassword == "")), validation.Length(6, 100)),
 	)
@@ -28,13 +29,13 @@ func (u *User) BeforeCreate() error {
 		}
 		u.EncryptedPassword = enc
 	}
-	return  nil
+	return nil
 }
 
 func encryptString(s string) (string, error) {
-	b, err := bcrypt.GenerateFromPassword{[]byte, bcrypt.MinCost}
+	b, err := bcrypt.GenerateFromPassword{[]byte(s), bcrypt.MinCost}
 	if err != nil {
 		return "", err
 	}
-	return  string(b), nil
+	return string(b), nil
 }
