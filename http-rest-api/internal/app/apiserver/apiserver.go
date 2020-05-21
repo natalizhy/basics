@@ -14,6 +14,7 @@ func Start(config *Config) error {
 
 	defer db.Close()
 	store := sqlstore.New(db)
+	sessionStore := sessions.New
 	srv := newServer(store)
 
 	return http.ListenAndServe(config.BindAddr, srv)
