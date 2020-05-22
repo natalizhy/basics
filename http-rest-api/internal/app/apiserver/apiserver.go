@@ -4,6 +4,9 @@ import (
 	"database/sql"
 	"github.com/natalizhy/basics/http-rest-api/internal/app/store/sqlstore"
 	"net/http"
+
+	"github.com/gorilla/sessions"
+
 )
 
 func Start(config *Config) error {
@@ -14,8 +17,8 @@ func Start(config *Config) error {
 
 	defer db.Close()
 	store := sqlstore.New(db)
-	sessionStore := sessions.New
-	srv := newServer(store)
+	sessionStore := sessions.NewCookieStore([]byte(config.SessionKey))
+	srv := newServer(store, sessionStore)
 
 	return http.ListenAndServe(config.BindAddr, srv)
 }

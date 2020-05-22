@@ -11,6 +11,9 @@ import (
 	"github.com/gorilla/sessions"
 )
 
+const (
+	sessionName  = "gopherschool"
+)
 var (
 	errIncorectEmailOrPassword = errors.New("incorrect email or password")
 )
@@ -81,6 +84,18 @@ func (s *server) handleSessionCreate() http.HandlerFunc {
 		u, err := s.store.User().FindByEmail(req.Email)
 		if err != nil  || u.ComparePassword(req.Password) {
 			s.error(w, r, http.StatusUnauthorized, errIncorectEmailOrPassword)
+			return
+		}
+
+		session, err := s.sessionStore.Get(r, sessionName)
+		if err != nil {
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		sessions.Values["user_id"] = u.ID
+		if err := s.sessionStore.Save(r, w, session); err != nil {
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 

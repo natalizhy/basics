@@ -6,46 +6,45 @@ import (
 	"github.com/natalizhy/basics/http-rest-api/internal/app/model"
 	"github.com/natalizhy/basics/http-rest-api/internal/app/store/teststore"
 
-	//"net/http"
-	//"net/http/httptest"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gorilla/sessions"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestServer_HandleUsersCreate(t *testing.T) {
-	s := newServer(teststore.New())
+	s := newServer(teststore.New(), sessions.NewCookieStore([]byte("secret")))
 	testCases := []struct {
 		name         string
 		payload      interface{}
 		expectedCode int
-	} {
+	}{
 		{
 			name: "valid",
 			payload: map[string]string{
-				"email": "user@example.org",
+				"email":    "user@example.org",
 				"password": "password",
 			},
 			expectedCode: http.StatusCreated,
 		},
 		{
-			name: "invalid payload",
-			payload: "invalid",
+			name:         "invalid payload",
+			payload:      "invalid",
 			expectedCode: http.StatusBadRequest,
 		},
 		{
-				name: "invalid params",
-				payload: map[string]string{
-					"email": "invalid",
-				},
-				expectedCode: http.StatusUnprocessableEntity,
+			name: "invalid params",
+			payload: map[string]string{
+				"email": "invalid",
+			},
+			expectedCode: http.StatusUnprocessableEntity,
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T){
+		t.Run(tc.name, func(t *testing.T) {
 			rec := httptest.NewRecorder()
 			b := &bytes.Buffer{}
 			json.NewEncoder(b).Encode(tc.payload)
@@ -64,36 +63,36 @@ func TestServer_HandleSessionCreate(t *testing.T) {
 	store.User().Create(u)
 
 	s := newServer(store)
-	testCases :=[]struct {
-		name string
-		payload interface{}
+	testCases := []struct {
+		name         string
+		payload      interface{}
 		expectedCode int
 	}{
 		{
 			name: "valid",
-			payload: map[string]string {
-				"email": u.Email,
+			payload: map[string]string{
+				"email":    u.Email,
 				"password": u.Password,
 			},
 			expectedCode: http.StatusOK,
 		},
 		{
-			name: "invalid payload",
-			payload: "invalid",
+			name:         "invalid payload",
+			payload:      "invalid",
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			name: "invalid email",
-			payload: map[string]string {
-				"email": "invalid",
+			payload: map[string]string{
+				"email":    "invalid",
 				"password": u.Password,
 			},
 			expectedCode: http.StatusUnauthorized,
 		},
 		{
 			name: "invalid password",
-			payload: map[string]string {
-				"email": u.Email,
+			payload: map[string]string{
+				"email":    u.Email,
 				"password": "invalid",
 			},
 			expectedCode: http.StatusUnauthorized,
@@ -101,7 +100,7 @@ func TestServer_HandleSessionCreate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T){
+		t.Run(tc.name, func(t *testing.T) {
 			rec := httptest.NewRecorder()
 			b := &bytes.Buffer{}
 			json.NewEncoder(b).Encode(tc.payload)
