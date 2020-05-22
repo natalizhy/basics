@@ -1,6 +1,7 @@
 package apiserver
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/gorilla/mux"
@@ -12,21 +13,27 @@ import (
 )
 
 const (
-	sessionName  = "gopherschool"
+	sessionName = "gopherschool"
+	ctxKeyUser ctxKey = iot
 )
+
 var (
-	errIncorectEmailOrPassword = errors.New("incorrect email or password")
+	errIncorrectEmailOrPassword = errors.New("incorrect email or password")
+	errNotAuthenticated         = errors.New("not authenticated")
 )
+
+type ctxKey int8
+
 type server struct {
-	router *mux.Router
-	store  store.Store
+	router       *mux.Router
+	store        store.Store
 	sessionStore sessions.Store
 }
 
 func newServer(store store.Store, sessionStore sessions.Store) *server {
 	s := &server{
-		router: mux.NewRouter(),
-		store:  store,
+		router:       mux.NewRouter(),
+		store:        store,
 		sessionStore: sessionStore,
 	}
 
@@ -40,9 +47,45 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) configureRouter() {
-	s.router.HandleFunc("/users", s.handleUsersCreate()).Method("POST")
-	s.router.HandleFunc("/session", s.handleSessionCreate()).Method("POST")
+	s.router.HandleFunc("/users", s.handleUsersCreate()).Methods("POST")
+	s.router.HandleFunc("/sessions", s.handleSessionCreate()).Methods("POST")
+
+	// /private/***
+	private := s.router.PathPrefix("/private").Subrouter()
+	private.Use(s.authenticateUser)
+	private.HandleFunc("/whoami", s.handleWhoami()).Methods("GET")
 }
+
+func (s *server) authenticateUser(next http.HandlerFunc) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, err := s.sessionStore.Get(r, sessionName)
+		if err != nil {
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		id, ok := session.Values["user_id"]
+		if !ok {
+			s.error(w, r, http.StatusUnauthorized, errNotAuthenticated)
+			return
+		}
+
+		u, err := s.store.User().Find(id.(int))
+		if err != nil {
+			s.error(w, r, http.StatusUnauthorized, errNotAuthenticated)
+			return
+		}
+
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctxKeyUser, u)))
+	})
+}
+
+func (s *server) handleWhoami() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request){
+		s.respond(w, r, http.StatusOK, r.Context().Value(ctxKeyUser).(*model.User))
+	}
+}
+
 func (s *server) handleUsersCreate() http.HandlerFunc {
 	type request struct {
 		Email    string `json:"email"`
@@ -56,8 +99,8 @@ func (s *server) handleUsersCreate() http.HandlerFunc {
 		}
 
 		u := &model.User{
-			Email:             req.Email,
-			Password:          req.Password,
+			Email:    req.Email,
+			Password: req.Password,
 		}
 		if err := s.store.User().Create(u); err != nil {
 			s.error(w, r, http.StatusUnprocessableEntity, err)
@@ -82,8 +125,8 @@ func (s *server) handleSessionCreate() http.HandlerFunc {
 		}
 
 		u, err := s.store.User().FindByEmail(req.Email)
-		if err != nil  || u.ComparePassword(req.Password) {
-			s.error(w, r, http.StatusUnauthorized, errIncorectEmailOrPassword)
+		if err != nil || u.ComparePassword(req.Password) {
+			s.error(w, r, http.StatusUnauthorized, errIncorrectEmailOrPassword)
 			return
 		}
 
@@ -103,11 +146,11 @@ func (s *server) handleSessionCreate() http.HandlerFunc {
 	}
 }
 
-func (s *server) error (w http.ResponseWriter, r *http.Request, code int, err error) {
+func (s *server) error(w http.ResponseWriter, r *http.Request, code int, err error) {
 	s.respond(w, r, code, map[string]string{"error": err.Error()})
 }
 
-func (s *server) respond (w http.ResponseWriter, r *http.Request, code int, data interface{}) {
+func (s *server) respond(w http.ResponseWriter, r *http.Request, code int, data interface{}) {
 	w.WriteHeader(code)
 	if data != nil {
 		json.NewEncoder(w).Encode(data)
