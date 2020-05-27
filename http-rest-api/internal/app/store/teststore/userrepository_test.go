@@ -2,7 +2,6 @@ package teststore_test
 
 import (
 	"github.com/natalizhy/basics/http-rest-api/internal/app/store"
-	"github.com/natalizhy/basics/http-rest-api/internal/app/store/sqlstore"
 	"github.com/natalizhy/basics/http-rest-api/internal/app/store/teststore"
 	"testing"
 

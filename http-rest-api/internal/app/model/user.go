@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/x/crypto/bcrypt"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
@@ -41,7 +41,7 @@ func(u *User) ComparePassword(password string) bool {
 }
 
 func encryptString(s string) (string, error) {
-	b, err := bcrypt.GenerateFromPassword{[]byte(s), bcrypt.MinCost}
+	b, err := bcrypt.GenerateFromPassword([]byte(s), bcrypt.MinCost)
 	if err != nil {
 		return "", err
 	}
