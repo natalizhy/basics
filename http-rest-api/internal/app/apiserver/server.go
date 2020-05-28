@@ -4,17 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/gorilla/mux"
-	"github.com/natalizhy/basics/http-rest-api/internal/app/model"
-	"github.com/natalizhy/basics/http-rest-api/internal/app/store"
 	"net/http"
 	"time"
 
-	"github.com/gorilla/sessions"
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 
 	"github.com/gorilla/handlers"
 
-	"github.com/google/uuid"
+	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
+
+	"github.com/natalizhy/basics/http-rest-api/internal/app/model"
+	"github.com/natalizhy/basics/http-rest-api/internal/app/store"
 )
 
 const (
@@ -64,10 +66,10 @@ func (s *server) configureRouter() {
 	// /private/***
 	private := s.router.PathPrefix("/private").Subrouter()
 	private.Use(s.authenticateUser)
-	private.HandleFunc("/whoami", s.handleWhoami()).Methods("GET")
+	private.HandleFunc("/whoami", s.handleWhoami())
 }
 
-func (s *server) setRequestID(next http.HandlerFunc) http.Handler {
+func (s *server) setRequestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		id := uuid.New().String()
 		w.Header().Set("X-Request-ID", id)
@@ -75,9 +77,9 @@ func (s *server) setRequestID(next http.HandlerFunc) http.Handler {
 	})
 }
 
-func (s *server) logRequest(next http.HandlerFunc) http.Handler {
+func (s *server) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger := s.logger.WithFiields(logrus.Fields{
+		logger := s.logger.WithFields(logrus.Fields{
 			"remote_addr": r.RemoteAddr,
 			"request_id":  r.Context().Value(ctxKeyRequestID),
 		})
@@ -86,7 +88,7 @@ func (s *server) logRequest(next http.HandlerFunc) http.Handler {
 
 		start := time.Now()
 		rw := &responseWriter{w, http.StatusOK}
-		next.ServeHTTP(rw, r)
+		next.ServeHTTP(w, r)
 
 		logger.Infof(
 			"completed with %d %s in %v",
@@ -97,7 +99,7 @@ func (s *server) logRequest(next http.HandlerFunc) http.Handler {
 	})
 }
 
-func (s *server) authenticateUser(next http.HandlerFunc) http.Handler {
+func (s *server) authenticateUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := s.sessionStore.Get(r, sessionName)
 		if err != nil {
@@ -177,7 +179,7 @@ func (s *server) handleSessionCreate() http.HandlerFunc {
 			return
 		}
 
-		sessions.Values["user_id"] = u.ID
+		session.Values["user_id"] = u.ID
 		if err := s.sessionStore.Save(r, w, session); err != nil {
 			s.error(w, r, http.StatusInternalServerError, err)
 			return

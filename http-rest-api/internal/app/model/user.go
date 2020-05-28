@@ -3,8 +3,8 @@ package model
 import (
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/go-ozzo/ozzo-validation/v4/is"
+	"github.com/go-ozzo/ozzo-validation"
+	"github.com/go-ozzo/ozzo-validation/is"
 )
 
 type User struct {
@@ -36,7 +36,7 @@ func (u *User) Sanitize() {
 	u.Password = ""
 }
 
-func(u *User) ComparePassword(password string) bool {
+func (u *User) ComparePassword(password string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(u.EncryptedPassword), []byte(password)) == nil
 }
 

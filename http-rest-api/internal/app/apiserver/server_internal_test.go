@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/stretchr/testify/assert"
 )
@@ -106,7 +107,7 @@ func TestServer_HandleSessionCreate(t *testing.T) {
 	store := teststore.New()
 	store.User().Create(u)
 
-	s := newServer(store)
+	s := newServer(store, sessions.NewCookieStore([]byte("secret")))
 	testCases := []struct {
 		name         string
 		payload      interface{}
@@ -151,7 +152,6 @@ func TestServer_HandleSessionCreate(t *testing.T) {
 			req, _ := http.NewRequest(http.MethodPost, "/session", b)
 			s.ServeHTTP(rec, req)
 			assert.Equal(t, tc.expectedCode, rec.Code)
-
 		})
 	}
 }
