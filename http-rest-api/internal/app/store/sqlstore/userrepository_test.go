@@ -1,10 +1,10 @@
 package sqlstore_test
 
 import (
-	"github.com/natalizhy/basics/http-rest-api/internal/app/store"
 	"testing"
 
 	"github.com/natalizhy/basics/http-rest-api/internal/app/model"
+	"github.com/natalizhy/basics/http-rest-api/internal/app/store"
 	"github.com/natalizhy/basics/http-rest-api/internal/app/store/sqlstore"
 	"github.com/stretchr/testify/assert"
 )

@@ -27,8 +27,10 @@ func (u *User) BeforeCreate() error {
 		if err != nil {
 			return err
 		}
+
 		u.EncryptedPassword = enc
 	}
+
 	return nil
 }
 

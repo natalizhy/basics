@@ -1,7 +1,6 @@
 package model_test
 
 import (
-	"expvar"
 	"testing"
 
 	"github.com/natalizhy/basics/http-rest-api/internal/app/model"
@@ -17,7 +16,7 @@ func TestUser_Validate(t *testing.T) {
 		{
 			name: "valid",
 			u: func() *model.User {
-				return  model.TestUser(t)
+				return model.TestUser(t)
 			},
 			isValid: true,
 		},
@@ -87,6 +86,6 @@ func TestUser_Validate(t *testing.T) {
 
 func TestUser_BeforeCreate(t *testing.T) {
 	u := model.TestUser(t)
-	assert.NoError(t, BeforeCreate())
+	assert.NoError(t, u.BeforeCreate())
 	assert.NotEmpty(t, u.EncryptedPassword)
 }
